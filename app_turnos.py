@@ -8,6 +8,33 @@ from pathlib import Path
 st.set_page_config(page_title="Calendario 24/7 – La Lucy", layout="wide")
 st.title("📅 Calendario de Turnos – La Lucy")
 
+# --- Sidebar dinámico: ancho chico/grande según si se está editando ---
+is_editing = bool(st.session_state.get("selected_day"))
+SIDEBAR_W = 520 if is_editing else 320  # ajustá a gusto (px)
+
+st.markdown(f"""
+<style>
+/* Fuerza ancho del sidebar */
+section[data-testid="stSidebar"] {{
+  width: {SIDEBAR_W}px !important;
+  min-width: {SIDEBAR_W}px !important;
+  max-width: {SIDEBAR_W}px !important;
+}}
+section[data-testid="stSidebar"] > div {{
+  width: {SIDEBAR_W}px !important;
+}}
+/* Widgets legibles dentro del sidebar */
+section[data-testid="stSidebar"] .stSelectbox > div {{ width: 100%; }}
+section[data-testid="stSidebar"] div[data-baseweb="select"] {{ min-width: 100%; }}
+section[data-testid="stSidebar"] .stButton > button {{
+  width: 100%;
+  white-space: nowrap;     /* que no corte el texto en vertical */
+  font-size: .95rem;
+  padding: 6px 10px;
+}}
+</style>
+""", unsafe_allow_html=True)
+
 # ================== PERSISTENCIA ==================
 DATA_DIR = Path("data")
 DATA_DIR.mkdir(exist_ok=True)
@@ -214,7 +241,7 @@ if "selected_day" in st.session_state and st.session_state.selected_day:
             keyA = f"sb_{iso}_{t}_A"
             if keyA not in st.session_state:
                 st.session_state[keyA] = str(row["Persona A"]) if str(row["Persona A"]) in opts else opts[0]
-            cA, cA_btn = st.sidebar.columns([4,1])
+            cA, cA_btn = st.sidebar.columns([3,1])  # más aire al botón
             with cA:
                 st.caption("A")
                 st.selectbox(f"A_{t}", opts, key=keyA, label_visibility="collapsed")
@@ -227,7 +254,7 @@ if "selected_day" in st.session_state and st.session_state.selected_day:
             keyB = f"sb_{iso}_{t}_B"
             if keyB not in st.session_state:
                 st.session_state[keyB] = str(row["Persona B"]) if str(row["Persona B"]) in opts else opts[0]
-            cB, cB_btn = st.sidebar.columns([4,1])
+            cB, cB_btn = st.sidebar.columns([3,1])
             with cB:
                 st.caption("B")
                 st.selectbox(f"B_{t}", opts, key=keyB, label_visibility="collapsed")
@@ -257,7 +284,7 @@ cal = apply_overrides(
 day = first
 while day <= last:
     cols = st.columns(7)
-    # huecos iniciales de la fila (si el mes no empieza lunes)
+    # huecos iniciales de la fila (si el mes no empieza lunes) — NO pintamos recuadros vacíos
     start_wd = day.weekday()
     i = 0
     for _ in range(start_wd):
@@ -289,7 +316,7 @@ while day <= last:
                 else:
                     for t in ["Mañana","Tarde","Noche"]:
                         row = sub[sub["Turno"]==t]
-                        if row.empty: 
+                        if row.empty:
                             continue
                         a = str(row.iloc[0]["Persona A"]); b = str(row.iloc[0]["Persona B"])
                         hi = row.iloc[0]["Hora Inicio"]; hf = row.iloc[0]["Hora Fin"]

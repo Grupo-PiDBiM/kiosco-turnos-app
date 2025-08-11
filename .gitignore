@@ -1,0 +1,19 @@
+﻿# ── Python / Entorno
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+
+# ── OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# ── Streamlit (secrets locales)
+.streamlit/secrets.toml
+
+# ── Datos locales (persistencia local)
+data/overrides.csv

@@ -1,0 +1,5 @@
+{
+  "timezone_offset_minutes": -180,
+  "date_format": "DD/MM/YYYY",
+  "workday_auto_close": false
+}

@@ -1,0 +1,10 @@
+id,Fecha,Persona,Tipo,Timestamp,Turno,Fuente
+1,2025-08-12,Hugo,Ingreso,2025-08-12 11:53:54.000000,Noche,boton
+2,2025-08-12,Hugo,Salida,,Noche,boton
+3,2025-08-12,Moira,Ingreso,2025-08-12 12:02:55.367748,Mañana,boton
+4,2025-08-12,Moira,Salida,2025-08-12 12:02:58.729520,Mañana,boton
+5,2025-08-12,Brisa,Ingreso,2025-08-12 12:03:34.099109,—,boton
+6,2025-08-12,Brisa,Salida,2025-08-12 12:05:39.276909,—,boton
+7,2025-08-12,Hugo,Ingreso,2025-08-12 12:33:55.768374,Noche,boton
+8,2025-08-12,Jere,Ingreso,2025-08-12 12:41:17.326535,—,boton
+9,2025-08-12,Jony,Ingreso,2025-08-12 12:51:36.821377,Noche,boton

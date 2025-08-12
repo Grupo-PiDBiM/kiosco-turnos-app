@@ -13,6 +13,7 @@ is_editing = bool(st.session_state.get("selected_day"))
 SIDEBAR_W = 520 if is_editing else 320
 st.markdown(f"""
 <style>
+/* Sidebar dinámico */
 section[data-testid="stSidebar"] {{
   width: {SIDEBAR_W}px !important; min-width:{SIDEBAR_W}px !important; max-width:{SIDEBAR_W}px !important;
 }}
@@ -20,6 +21,40 @@ section[data-testid="stSidebar"] > div {{ width:{SIDEBAR_W}px !important; }}
 section[data-testid="stSidebar"] .stSelectbox > div {{ width:100%; }}
 section[data-testid="stSidebar"] div[data-baseweb="select"]{{ min-width:100%; }}
 section[data-testid="stSidebar"] .stButton > button{{ width:100%; white-space:nowrap; font-size:.95rem; padding:6px 10px; }}
+
+/* ====== Estilos generales calendario (ESCRITORIO + MÓVIL) ====== */
+.daybox{{border:1px solid #e5e7eb;border-radius:12px;padding:10px 12px;background:#fff;
+        min-height:120px; box-shadow:0 1px 2px rgba(0,0,0,.05)}}
+.dayhead{{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}}
+.daynum{{font-weight:700;color:#111827}}
+.editbtn{{font-size:13px;color:#374151;border:1px solid #e5e7eb;border-radius:8px;padding:2px 6px;background:#f9fafb}}
+.editbtn:hover{{background:#f3f4f6}}
+
+.row{{margin-top:6px; display:flex; align-items:center; gap:6px; flex-wrap:wrap}}
+.ttl{{font-weight:600; font-size:.88rem; color:#111827}}
+.horas{{color:#6b7280; font-size:.82rem}}
+.chip{{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.88rem;white-space:nowrap}}
+.chip-hugo{{background:#DBEAFE}} .chip-moira{{background:#EDE9FE}} .chip-brisa{{background:#FEF3C7}}
+.chip-jere{{background:#FFE4D6}} .chip-alina{{background:#FCE7F3;border:1px dashed #f472b6}}
+.chip-jony{{background:#D1FAE5}} .chip-dianela{{background:#FCE7E7}}
+.chip-warn{{background:#fee2e2;border:1px dashed #ef4444}}
+.nav{{display:flex;justify-content:space-between;align-items:center;margin:6px 0 10px}}
+.nav h3{{margin:0}}
+.small{{font-size:.85rem;color:#6b7280}}
+.dow-header{{font-weight:700; text-align:center; margin-bottom:6px}}
+
+/* ====== Ajustes SOLO para pantallas chicas (celular) ====== */
+@media (max-width: 768px) {{
+  section[data-testid="stSidebar"]{{ width:100% !important; min-width:100% !important; max-width:100% !important; }}
+  section[data-testid="stSidebar"] > div{{ width:100% !important; }}
+  .daybox{{ min-height:88px; padding:8px 10px; border-radius:14px; }}
+  .daynum{{ font-size:1rem; }}
+  .ttl{{ font-size:.9rem; }}
+  .horas{{ font-size:.78rem; }}
+  .chip{{ font-size:.8rem; padding:2px 7px; }}
+  .dow-header{{ font-size:.95rem; }}
+  .stButton > button{{ padding:6px 10px; }}
+}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -28,27 +63,6 @@ DATA_DIR = Path("data"); DATA_DIR.mkdir(exist_ok=True)
 OV_PATH    = DATA_DIR / "overrides.csv"   # cambios manuales (A/B/Libre)
 ABS_PATH   = DATA_DIR / "absences.csv"    # faltas (log)
 TASKS_PATH = DATA_DIR / "tasks.csv"       # gestor de tareas
-
-# ================== ESTILOS (calendario) ==================
-st.markdown("""
-<style>
-.daybox{border:1px solid #e5e7eb;border-radius:12px;padding:8px 10px;background:#fff; min-height:120px; box-shadow:0 1px 2px rgba(0,0,0,.04)}
-.dayhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
-.daynum{font-weight:700;color:#111827}
-.row{margin-top:6px; display:flex; align-items:center; gap:6px; flex-wrap:wrap}
-.ttl{font-weight:600; font-size:.88rem; color:#111827}
-.horas{color:#6b7280; font-size:.82rem}
-.chip{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.88rem;white-space:nowrap}
-.chip-hugo{background:#DBEAFE} .chip-moira{background:#EDE9FE} .chip-brisa{background:#FEF3C7}
-.chip-jere{background:#FFE4D6} .chip-alina{background:#FCE7F3;border:1px dashed #f472b6}
-.chip-jony{background:#D1FAE5} .chip-dianela{background:#FCE7E7}
-.chip-warn{background:#fee2e2;border:1px dashed #ef4444}
-.nav{display:flex;justify-content:space-between;align-items:center;margin:6px 0 10px}
-.nav h3{margin:0}
-.small{font-size:.85rem;color:#6b7280}
-.dow-header{font-weight:700; text-align:center; margin-bottom:6px}
-</style>
-""", unsafe_allow_html=True)
 
 # ================== CONSTANTES ==================
 PERSONAS = ["Hugo","Moira","Brisa","Jere","Alina","Jony","Dianela"]
@@ -65,6 +79,7 @@ ASIGN_DEF = {
 }
 TITULARES = ["Moira","Brisa","Jere","Dianela","Hugo","Jony"]  # sin Alina
 
+# ================== HELPERS ==================
 def chip_cls(nombre: str) -> str:
     n = str(nombre).lower()
     if "falta cubrir" in n: return "chip-warn"
@@ -187,7 +202,7 @@ def append_absence(rec: dict):
 def remove_absences_for_day_if_present(fecha: dt.date, personas_presentes: set):
     """Si alguien fue marcado como falta y ahora está presente ese día, se elimina su registro de falta."""
     df = load_absences()
-    if df.empty: 
+    if df.empty:
         return
     keep = ~((df["Fecha"] == fecha) & (df["Persona"].isin(list(personas_presentes))))
     df = df[keep].copy()
@@ -238,10 +253,6 @@ if "cur_month" not in st.session_state:
 
 # ================== NAV / RANGOS ==================
 cur = st.session_state.cur_month
-def rango_mes(year: int, month: int):
-    first = dt.date(year, month, 1)
-    last  = dt.date(year, month, calendar.monthrange(year, month)[1])
-    return first, last
 first, last = rango_mes(cur.year, cur.month)
 
 # ================== APLICAR CAMBIOS PENDIENTES ==================
@@ -259,7 +270,7 @@ if _pending_abs:
 # ================== TABS ==================
 tab_cal, tab_stats, tab_tasks = st.tabs(["📆 Calendario", "📊 Faltas & Horas", "🗂️ Tareas"])
 
-# ================== CALENDARIO ==================
+# ================== CALENDARIO (MISMO RENDER DE SIEMPRE) ==================
 with tab_cal:
     nav_l, nav_c, nav_r = st.columns([1,6,1])
     with nav_l:
@@ -272,12 +283,6 @@ with tab_cal:
         if st.button("Mes siguiente ▶"):
             st.session_state.cur_month = add_months(cur, +1)
             st.rerun()
-
-    # Encabezado Lunes..Domingo
-    cols = st.columns(7)
-    for i, c in enumerate(cols):
-        with c:
-            st.markdown(f"<div class='dow-header'>{DIAS[i]}</div>", unsafe_allow_html=True)
 
     # Helpers editor
     def libre_del_dia(fecha: dt.date) -> str:
@@ -312,10 +317,8 @@ with tab_cal:
                         ausente = str(row["Persona A"])
                         nuevo_val = libre_hoy if libre_hoy else "⚠ Falta cubrir"
                         st.session_state.setdefault("_pending_set", {})[keyA] = nuevo_val
-                        # swap del libre → ahora libre = ausente
                         if ausente:
-                            set_libre_override_for_day(sel, ausente)
-                        # log
+                            set_libre_override_for_day(sel, ausente)  # libre -> ausente
                         st.session_state.setdefault("_pending_abs", []).append({
                             "Fecha": sel, "Turno": t, "Slot": "A",
                             "Persona": ausente, "Motivo":"FALTA",
@@ -362,15 +365,10 @@ with tab_cal:
                 libre_actual = libre_del_dia(sel)
                 save_overrides_for_day(sel, valores, libre_override=libre_actual)
 
-                # >>> NUEVO: borrar faltas si la persona terminó presente ese día
-                presentes = set()
-                for t in ["Mañana","Tarde","Noche"]:
-                    presentes.add(valores[t]["A"])
-                    presentes.add(valores[t]["B"])
-                presentes.discard("⚠ Falta cubrir")
-                presentes.discard("")  # por si acaso
+                # borrar faltas si terminó presente
+                presentes = set([valores[t]["A"] for t in ["Mañana","Tarde","Noche"]] + [valores[t]["B"] for t in ["Mañana","Tarde","Noche"]])
+                presentes.discard("⚠ Falta cubrir"); presentes.discard("")
                 remove_absences_for_day_if_present(sel, presentes)
-                # <<<
 
                 st.sidebar.success("Guardado.")
                 st.rerun()
@@ -379,21 +377,29 @@ with tab_cal:
             st.session_state.selected_day = None
             st.rerun()
 
-    # RENDER del mes
+    # --------- DATAFRAME del mes (con overrides aplicados) ---------
     cal = apply_overrides(
         st.session_state.cal,
         st.session_state.overrides if "overrides" in st.session_state else load_overrides()
     )
 
-    # recorrer semanas del mes (sin casilleros vacíos fuera del mes)
+    # Encabezado Lunes..Domingo
+    cols = st.columns(7)
+    for i, c in enumerate(cols):
+        with c:
+            st.markdown(f"<div class='dow-header'>{DIAS[i]}</div>", unsafe_allow_html=True)
+
+    # recorrer semanas del mes (misma grilla de siempre)
     day = first
     while day <= last:
         cols = st.columns(7)
         start_wd = day.weekday()
         i = 0
+        # huecos iniciales
         for _ in range(start_wd):
             _ = cols[i].empty(); i += 1
 
+        # pintar días
         while i < 7 and day <= last:
             with cols[i]:
                 try:
@@ -419,7 +425,8 @@ with tab_cal:
                         st.markdown(f"<div class='small'>🟢 Libre: {libre_hoy}</div>", unsafe_allow_html=True)
                         for t in ["Mañana","Tarde","Noche"]:
                             row = sub[sub["Turno"]==t]
-                            if row.empty: continue
+                            if row.empty: 
+                                continue
                             a = str(row.iloc[0]["Persona A"]); b = str(row.iloc[0]["Persona B"])
                             hi = row.iloc[0]["Hora Inicio"]; hf = row.iloc[0]["Hora Fin"]
                             st.markdown(
